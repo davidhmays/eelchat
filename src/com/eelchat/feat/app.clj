@@ -31,6 +31,21 @@
   {:status 303
    :headers {"Location" (str "/community/" (:xt/id community))}})
 
+(defn new-channel [{:keys [community roles] :as req}]
+  (if (and community (contains? roles :admin))
+    (let [chan-id (random-uuid)]
+     (biff/submit-tx req
+       [{:db/doc-type :channel
+         :xt/id chan-id
+         :chan/title (str "Channel #" (rand-int 1000))
+         :chan/comm (:xt/id community)
+         :chan/type :chat
+         :chan/access :private}])
+     {:status 303
+      :headers {"Location" (str "/community/" (:xt/id community) "/channel/" chan-id)}})
+    {:status 403
+     :body "Forbidden."}))
+
 (defn community [{:keys [biff/db user community] :as req}]
   (let [member (some (fn [mem]
                        (= (:xt/id community) (get-in mem [:mem/comm :xt/id])))
@@ -54,6 +69,10 @@
          [:button.btn {:type "submit"} "Join this community"])
         [:div {:class "grow-[1.75]"}]]))))
 
+(defn channel-page [req]
+  ;; We'll update this soon
+  (community req))
+
 (defn wrap-community [handler]
   (fn [{:keys [biff/db user path-params] :as req}]
     (if-some [community (xt/entity db (parse-uuid (:id path-params)))]
@@ -66,10 +85,21 @@
       {:status 303
        :headers {"location" "/app"}})))
 
+(defn wrap-channel [handler]
+  (fn [{:keys [biff/db user community path-params] :as req}]
+    (let [channel (xt/entity db (parse-uuid (:chan-id path-params)))]
+      (if (= (:chan/comm channel) (:xt/id community))
+        (handler (assoc req :channel channel))
+        {:status 303
+         :headers {"Location" (str "/community/" (:xt/id community))}}))))
+
 (def features
   {:routes ["" {:middleware [mid/wrap-signed-in]}
             ["/app"           {:get app}]
             ["/community"     {:post new-community}]
             ["/community/:id" {:middleware [wrap-community]}
              [""      {:get community}]
-             ["/join" {:post join-community}]]]})
+             ["/join" {:post join-community}]
+             ["/channel" {:post new-channel}]
+             ["/channel/:chan-id" {:middleware [wrap-channel]}
+              ["" {:get channel-page}]]]]})
