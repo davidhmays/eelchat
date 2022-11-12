@@ -1,6 +1,6 @@
 (ns com.eelchat.ui
   (:require [clojure.java.io :as io]
-            [com.biffweb :as biff]))
+            [com.biffweb :as biff :refer [q]]))
 
 (defn css-path []
   (if-some [f (io/file (io/resource "public/css/main.css"))]
@@ -38,7 +38,17 @@
      body]
     [:div {:class "grow-[2]"}]]))
 
-(defn app-page [{:keys [uri user community roles] :as opts} & body]
+(defn channels [{:keys [biff/db community roles]}]
+  (when (some? roles)
+    (sort-by
+     :chan/title
+     (q db
+        '{:find (pull channel [*])
+          :in [comm]
+          :where [[channel :chan/comm comm]]}
+        (:xt/id community)))))
+
+(defn app-page [{:keys [biff/db uri user community roles channel] :as opts} & body]
   (base
    opts
    [:.flex.bg-orange-50
@@ -59,6 +69,14 @@
           :selected (when (= url uri)
                       url)}
          (:comm/title comm)])]
+     [:.h-4]
+     (for [chan (channels opts)
+           :let [active (= (:xt/id chan) (:xt/id channel))]]
+       [:.mt-3 (if active
+                 [:span.font-bold (:chan/title chan)]
+                 [:a.link {:href (str "/community/" (:xt/id community)
+                                      "/channel/" (:xt/id chan))}
+                  (:chan/title chan)])])
      [:.grow]
      (when (contains? roles :admin)
        [:<>
