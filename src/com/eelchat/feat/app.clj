@@ -55,9 +55,14 @@
         [:div {:class "grow-[1.75]"}]]))))
 
 (defn wrap-community [handler]
-  (fn [{:keys [biff/db path-params] :as req}]
+  (fn [{:keys [biff/db user path-params] :as req}]
     (if-some [community (xt/entity db (parse-uuid (:id path-params)))]
-      (handler (assoc req :community community))
+      (let [roles (->> (:user/mems user)
+                       (filter (fn [mem]
+                                 (= (:xt/id community) (get-in mem [:mem/comm :xt/id]))))
+                       first
+                       :mem/roles)]
+        (handler (assoc req :community community :roles roles)))
       {:status 303
        :headers {"location" "/app"}})))
 

@@ -38,7 +38,7 @@
      body]
     [:div {:class "grow-[2]"}]]))
 
-(defn app-page [{:keys [uri user] :as opts} & body]
+(defn app-page [{:keys [uri user community roles] :as opts} & body]
   (base
    opts
    [:.flex.bg-orange-50
@@ -60,6 +60,12 @@
                       url)}
          (:comm/title comm)])]
      [:.grow]
+     (when (contains? roles :admin)
+       [:<>
+        (biff/form
+         {:action (str "/community/" (:xt/id community) "/channel")}
+         [:button.btn.w-full {:type "submit"} "New channel"])
+        [:.h-3]])
      (biff/form
       {:action "/community"}
       [:button.btn.w-full {:type "submit"} "New community"])
