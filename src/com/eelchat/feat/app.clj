@@ -118,7 +118,9 @@
                       "/channel/" (:xt/id channel))
         :hx-target "#messages"
         :hx-swap "beforeend"
-        :_ "on htmx:afterRequest set <textarea/>'s value to '' then send newMessage to #messages"
+        :_ (str "on htmx:afterRequest"
+                " set <textarea/>'s value to ''"
+                " then send newMessage to #messages")
         :class "flex"}
        [:textarea.w-full#text {:name "text"}]
        [:.w-2]
@@ -137,10 +139,10 @@
        :headers {"location" "/app"}})))
 
 (defn wrap-channel [handler]
-  (fn [{:keys [biff/db user roles community path-params] :as req}]
+  (fn [{:keys [biff/db user mem community path-params] :as req}]
     (let [channel (xt/entity db (parse-uuid (:chan-id path-params)))]
       (if (and (= (:chan/comm channel) (:xt/id community))
-               (or roles (= (:chan/access channel) :public)))
+               (or mem (= (:chan/access channel) :public)))
         (handler (assoc req :channel channel))
         {:status 303
          :headers {"Location" (str "/community/" (:xt/id community))}}))))
