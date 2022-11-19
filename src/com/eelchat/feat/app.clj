@@ -137,15 +137,14 @@
    :headers {"upgrade" "websocket"
              "connection" "upgrade"}
    :ws {:on-connect (fn [ws]
-                      (prn :connect (swap! chat-clients assoc-in [chan-id mem-id] ws)))
+                      (swap! chat-clients assoc-in [chan-id mem-id] ws))
         :on-close (fn [ws status-code reason]
-                    (prn :disconnect
-                         (swap! chat-clients
-                                (fn [chat-clients]
-                                  (let [chat-clients (update chat-clients chan-id dissoc mem-id)]
-                                    (if (empty? (get chat-clients chan-id))
-                                      (dissoc chat-clients chan-id)
-                                      chat-clients))))))}})
+                    (swap! chat-clients
+                           (fn [chat-clients]
+                             (let [chat-clients (update chat-clients chan-id dissoc mem-id)]
+                               (if (empty? (get chat-clients chan-id))
+                                 (dissoc chat-clients chan-id)
+                                 chat-clients)))))}})
 
 (defn wrap-community [handler]
   (fn [{:keys [biff/db user path-params] :as req}]
