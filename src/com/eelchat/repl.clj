@@ -25,10 +25,10 @@
   ;; terminal. It may not be necessary in your editor.
   (biff/fix-print (biff/refresh))
 
-(let [{:keys [biff/db] :as sys} (get-sys)]
-  (q db
-     '{:find (pull msg [*])
-       :where [[msg :msg/text]]}))
+  (let [{:keys [biff/db] :as sys} (get-sys)]
+    (q db
+       '{:find (pull msg [*])
+         :where [[msg :msg/text]]}))
 
   (sort (keys @biff/system))
 
