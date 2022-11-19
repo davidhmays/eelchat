@@ -46,11 +46,17 @@
     {:status 403
      :body "Forbidden."}))
 
-(defn delete-channel [{:keys [channel roles] :as req}]
+(defn delete-channel [{:keys [biff/db channel roles] :as req}]
   (when (contains? roles :admin)
     (biff/submit-tx req
-      [{:db/op :delete
-        :xt/id (:xt/id channel)}]))
+      (for [id (conj (q db
+                        '{:find msg
+                          :in [channel]
+                          :where [[msg :msg/chan channel]]}
+                        (:xt/id channel))
+                     (:xt/id channel))]
+        {:db/op :delete
+         :xt/id id})))
   [:<>])
 
 (defn community [{:keys [biff/db user community] :as req}]
