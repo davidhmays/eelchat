@@ -52,7 +52,7 @@
       (for [id (conj (q db
                         '{:find msg
                           :in [channel]
-                          :where [[msg :msg/chan channel]]}
+                          :where [[msg :msg/channel channel]]}
                         (:xt/id channel))
                      (:xt/id channel))]
         {:db/op :delete
