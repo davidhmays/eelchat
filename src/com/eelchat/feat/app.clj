@@ -2,6 +2,8 @@
   (:require [com.biffweb :as biff :refer [q]]
             [com.eelchat.middleware :as mid]
             [com.eelchat.ui :as ui]
+            [ring.adapter.jetty9 :as jetty]
+            [rum.core :as rum]
             [xtdb.api :as xt]))
 
 (defn app [req]
@@ -146,6 +148,21 @@
                                  (dissoc chat-clients chan-id)
                                  chat-clients)))))}})
 
+(defn on-new-message [{:keys [biff.xtdb/node com.eelchat/chat-clients]} tx]
+  (let [db-before (xt/db node {::xt/tx-id (dec (::xt/tx-id tx))})]
+    (doseq [[op & args] (::xt/tx-ops tx)
+            :when (= op ::xt/put)
+            :let [[doc] args]
+            :when (and (contains? doc :msg/text)
+                       (nil? (xt/entity db-before (:xt/id doc))))
+            :let [html (rum/render-static-markup
+                        [:div#messages {:hx-swap-oob "beforeend"}
+                         (message-view doc)
+                         [:div {:_ "init send newMessage to #messages then remove me"}]])]
+            [mem-id client] (get @chat-clients (:msg/channel doc))
+            :when (not= mem-id (:msg/mem doc))]
+      (jetty/send! client html))))
+
 (defn wrap-community [handler]
   (fn [{:keys [biff/db user path-params] :as req}]
     (if-some [community (xt/entity db (parse-uuid (:id path-params)))]
@@ -179,4 +196,5 @@
               ["" {:get channel-page
                    :post new-message
                    :delete delete-channel}]
-              ["/connect" {:get connect}]]]]})
+              ["/connect" {:get connect}]]]]
+   :on-tx on-new-message})
