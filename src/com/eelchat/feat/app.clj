@@ -85,6 +85,16 @@
       [:span.text-gray-600 (biff/format-date created-at "d MMM h:mm aa")]]
      [:p.whitespace-pre-wrap.mb-6 text]]))
 
+(defn new-message [{:keys [channel mem params] :as req}]
+  (let [msg {:xt/id (random-uuid)
+             :msg/mem (:xt/id mem)
+             :msg/channel (:xt/id channel)
+             :msg/created-at (java.util.Date.)
+             :msg/text (:text params)}]
+    (biff/submit-tx (assoc req :biff.xtdb/retry false)
+      [(assoc msg :db/doc-type :message)])
+    (message-view msg)))
+
 (defn channel-page [{:keys [biff/db community channel] :as req}]
   (let [msgs (q db
                 '{:find (pull msg [*])
@@ -93,25 +103,38 @@
                 (:xt/id channel))]
     (ui/app-page
      req
-     [:.border.border-neutral-600.p-3.bg-white.grow.flex-1.overflow-y-auto#messages
-      (map message-view (sort-by :msg/created-at msgs))])))
+      [:.border.border-neutral-600.p-3.bg-white.grow.flex-1.overflow-y-auto#messages
+       {:_ "on load or newMessage set my scrollTop to my scrollHeight"}
+       (map message-view (sort-by :msg/created-at msgs))]
+      [:.h-3]
+      (biff/form
+       {:hx-post (str "/community/" (:xt/id community)
+                      "/channel/" (:xt/id channel))
+        :hx-target "#messages"
+        :hx-swap "beforeend"
+        :_ "on htmx:afterRequest set <textarea/>'s value to '' then send newMessage to #messages"
+        :class "flex"}
+       [:textarea.w-full#text {:name "text"}]
+       [:.w-2]
+       [:button.btn {:type "submit"} "Send"]))))
 
 (defn wrap-community [handler]
   (fn [{:keys [biff/db user path-params] :as req}]
     (if-some [community (xt/entity db (parse-uuid (:id path-params)))]
-      (let [roles (->> (:user/mems user)
-                       (filter (fn [mem]
-                                 (= (:xt/id community) (get-in mem [:mem/comm :xt/id]))))
-                       first
-                       :mem/roles)]
-        (handler (assoc req :community community :roles roles)))
+      (let [mem (->> (:user/mems user)
+                     (filter (fn [mem]
+                               (= (:xt/id community) (get-in mem [:mem/comm :xt/id]))))
+                     first)
+            roles (:mem/roles mem)]
+        (handler (assoc req :community community :roles roles :mem mem)))
       {:status 303
        :headers {"location" "/app"}})))
 
 (defn wrap-channel [handler]
-  (fn [{:keys [biff/db user community path-params] :as req}]
+  (fn [{:keys [biff/db user roles community path-params] :as req}]
     (let [channel (xt/entity db (parse-uuid (:chan-id path-params)))]
-      (if (= (:chan/comm channel) (:xt/id community))
+      (if (and (= (:chan/comm channel) (:xt/id community))
+               (or roles (= (:chan/access channel) :public)))
         (handler (assoc req :channel channel))
         {:status 303
          :headers {"Location" (str "/community/" (:xt/id community))}}))))
@@ -126,4 +149,5 @@
              ["/channel" {:post new-channel}]
              ["/channel/:chan-id" {:middleware [wrap-channel]}
               ["" {:get channel-page
+                   :post new-message
                    :delete delete-channel}]]]]})
