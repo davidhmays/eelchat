@@ -76,9 +76,25 @@
          [:button.btn {:type "submit"} "Join this community"])
         [:div {:class "grow-[1.75]"}]]))))
 
-(defn channel-page [req]
-  ;; We'll update this soon
-  (community req))
+(defn message-view [{:msg/keys [mem text created-at]}]
+  (let [username (str "User " (subs (str mem) 0 4))]
+    [:div
+     [:.text-sm
+      [:span.font-bold username]
+      [:span.w-2.inline-block]
+      [:span.text-gray-600 (biff/format-date created-at "d MMM h:mm aa")]]
+     [:p.whitespace-pre-wrap.mb-6 text]]))
+
+(defn channel-page [{:keys [biff/db community channel] :as req}]
+  (let [msgs (q db
+                '{:find (pull msg [*])
+                  :in [channel]
+                  :where [[msg :msg/channel channel]]}
+                (:xt/id channel))]
+    (ui/app-page
+     req
+     [:.border.border-neutral-600.p-3.bg-white.grow.flex-1.overflow-y-auto#messages
+      (map message-view (sort-by :msg/created-at msgs))])))
 
 (defn wrap-community [handler]
   (fn [{:keys [biff/db user path-params] :as req}]
