@@ -1,0 +1,61 @@
+@import "./fonts/_fonts.css";
+@import "./properties.base/_properties.base.css";
+@import "./htmlElements.base/_htmlElements.base.css";
+
+nav {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0 16px;
+    background-color: #fff7ed;
+    background-color: #fafafa;
+    /* background-color: #efeae1; */
+    /* background-color: #fff7ed; */
+    background-color: white;
+    /* background-color: #372300; */
+    /* background-color: #EDE6DA; */
+    display: flex;
+    border-bottom: solid 1px #353437;
+}
+
+nav h1{
+    
+
+    font-family: Gallagher;
+    font-size: 2.5rem;
+    color: #353437;
+    color: #4C3000;
+    color: #372300;
+    /* color: rgba(255,255,255,0.9); */
+    /* color: #584b4f; */
+    /* color: brown; */
+    margin: 0;
+    
+}
+
+div{
+    color: #372300;
+    /* color: rgba(255,255,255,0.9); */
+}
+
+button{
+    background-color: transparent !important;
+    border: 2px solid #372300 !important;
+    border-radius: 5px;
+    max-height: 20px; 
+    /* color: #372300; */
+
+}
+
+sl-card {
+    background-color: #fafafa;
+}
+
+.tester{
+    background-color: #fafafa;
+    /* background-color: #fff7ed; */
+    /* background-color: #efeae1; */
+    background-color: white;
+    /* background-color: #EDE6DA; */
+    /* background-color: #372300; */
+}

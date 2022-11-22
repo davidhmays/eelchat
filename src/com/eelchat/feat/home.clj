@@ -32,21 +32,14 @@
               focus:border-teal-600
               focus:ring-teal-600]}]
    [:.h-3]
-   [:button
+   [:sl-button
     (merge
      (when (util/email-signin-enabled? sys)
        {:data-sitekey site-key
         :data-callback "onSubscribe"
         :data-action "subscribe"})
      {:type "submit"
-      :class '[bg-teal-600
-               hover:bg-teal-800
-               text-white
-               py-2
-               px-4
-               rounded
-               w-full
-               g-recaptcha]})
+      :class '[g-recaptcha]})
     "Join the waitlist"]))
 
 (def recaptcha-scripts
@@ -60,7 +53,11 @@
   (ui/base
    {:base/head (when (util/email-signin-enabled? sys)
                  recaptcha-scripts)}
-   [:.bg-orange-50.flex.flex-col.flex-grow.items-center.p-3
+   [:nav
+    [:h1 "Dahoma Creative"]
+    [:button "Sign in"]] 
+   [:.tester
+    [:sl-card "hello"]
     [:.h-12.grow]
     [:img.w-40 {:src "/img/eel.svg"}]
     [:.h-6]
@@ -73,7 +70,8 @@
     (signin-form sys)
     [:.h-12 {:class "grow-[2]"}]
     [:.text-sm recaptcha-disclosure]
-    [:.h-6]]))
+    [:.h-6]
+    ]))
 
 (def features
   {:routes ["" {:middleware [mid/wrap-redirect-signed-in]}

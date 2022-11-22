@@ -15,12 +15,22 @@
   (apply
    biff/base-html
    (-> opts
-       (merge #:base{:title "eelchat"
+       (merge #:base{:title "Dahoma Creative"
                      :lang "en-US"
-                     :description "The world's finest discussion platform."
+                     :description "Experimental designs and interesting finds."
                      :image "/img/logo.png"})
        (update :base/head (fn [head]
                             (concat [[:link {:rel "stylesheet" :href (css-path)}]
+                                     [:link
+                                      {:rel "stylesheet",
+                                       :href
+                                       "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.83/dist/themes/light.css"}]
+                                     [:script
+                                      {:type "module",
+                                       :src
+                                       "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.83/dist/shoelace.js"}]
+                                     [:link {:rel "stylesheet", :href "/ui.base/_ui.base.css"}]
+                                     [:link {:rel "stylesheet", :href "/ui.base/_ui.base.css"}]
                                      [:script {:src "https://unpkg.com/htmx.org@1.8.4"}]
                                      [:script {:src "https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"}]
                                      [:script {:src "https://unpkg.com/hyperscript.org@0.9.3"}]
