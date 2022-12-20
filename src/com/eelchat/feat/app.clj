@@ -6,59 +6,65 @@
             [rum.core :as rum]
             [xtdb.api :as xt]))
 
+(defn html [text] (str "<!DOCTYPE html><html lang = \"en\">" text "</html>"))
+(defn body [text] (str "<body>" text "</body>"))
+(defn div [text] (str "<div>" text "</div>"))
+
 (defn app [req]
   (ui/app-page
    req
-   [:p "Select a community, or create a new one."]))
+   [:p "Select a community, or create a new one."]
+   [:sl-button
+    {:hx-post "/svgUpload"} "Upload SVG"]))
 
 (defn new-community [{:keys [session] :as req}]
   (let [comm-id (random-uuid)]
     (biff/submit-tx req
-      [{:db/doc-type :community
-        :xt/id comm-id
-        :comm/title (str "Community #" (rand-int 1000))}
-       {:db/doc-type :membership
-        :mem/user (:uid session)
-        :mem/comm comm-id
-        :mem/roles #{:admin}}])
+                    [{:db/doc-type :community
+                      :xt/id comm-id
+                      :comm/title (str "Community #" (rand-int 1000))}
+                     {:db/doc-type :membership
+                      :mem/user (:uid session)
+                      :mem/comm comm-id
+                      :mem/roles #{:admin}}])
     {:status 303
      :headers {"Location" (str "/community/" comm-id)}}))
 
 (defn join-community [{:keys [user community] :as req}]
   (biff/submit-tx req
-    [{:db/doc-type :membership
-      :db.op/upsert {:mem/user (:xt/id user)
-                     :mem/comm (:xt/id community)}
-      :mem/roles [:db/default #{}]}])
+                  [{:db/doc-type :membership
+                    :db.op/upsert {:mem/user (:xt/id user)
+                                   :mem/comm (:xt/id community)}
+                    :mem/roles [:db/default #{}]}])
   {:status 303
    :headers {"Location" (str "/community/" (:xt/id community))}})
 
 (defn new-channel [{:keys [community roles] :as req}]
   (if (and community (contains? roles :admin))
     (let [chan-id (random-uuid)]
-     (biff/submit-tx req
-       [{:db/doc-type :channel
-         :xt/id chan-id
-         :chan/title (str "Channel #" (rand-int 1000))
-         :chan/comm (:xt/id community)
-         :chan/type :chat
-         :chan/access :private}])
-     {:status 303
-      :headers {"Location" (str "/community/" (:xt/id community) "/channel/" chan-id)}})
+      (biff/submit-tx req
+                      [{:db/doc-type :channel
+                        :xt/id chan-id
+                        :chan/title (str "Channel #" (rand-int 1000))
+                        :chan/comm (:xt/id community)
+                        :chan/type :chat
+                        :chan/access :private}])
+      {:status 303
+       :headers {"Location" (str "/community/" (:xt/id community) "/channel/" chan-id)}})
     {:status 403
      :body "Forbidden."}))
 
 (defn delete-channel [{:keys [biff/db channel roles] :as req}]
   (when (contains? roles :admin)
     (biff/submit-tx req
-      (for [id (conj (q db
-                        '{:find msg
-                          :in [channel]
-                          :where [[msg :msg/channel channel]]}
-                        (:xt/id channel))
-                     (:xt/id channel))]
-        {:db/op :delete
-         :xt/id id})))
+                    (for [id (conj (q db
+                                      '{:find msg
+                                        :in [channel]
+                                        :where [[msg :msg/channel channel]]}
+                                      (:xt/id channel))
+                                   (:xt/id channel))]
+                      {:db/op :delete
+                       :xt/id id})))
   [:<>])
 
 (defn community [{:keys [biff/db user community] :as req}]
@@ -100,7 +106,7 @@
              :msg/created-at (java.util.Date.)
              :msg/text (:text params)}]
     (biff/submit-tx (assoc req :biff.xtdb/retry false)
-      [(assoc msg :db/doc-type :message)])
+                    [(assoc msg :db/doc-type :message)])
     (message-view msg)))
 
 (defn channel-page [{:keys [biff/db community channel] :as req}]
@@ -113,23 +119,23 @@
                   "/channel/" (:xt/id channel))]
     (ui/app-page
      req
-      [:.border.border-neutral-600.p-3.bg-white.grow.flex-1.overflow-y-auto#messages
-       {:hx-ext "ws"
-        :ws-connect (str href "/connect")
-        :_ "on load or newMessage set my scrollTop to my scrollHeight"}
-       (map message-view (sort-by :msg/created-at msgs))]
-      [:.h-3]
-      (biff/form
-       {:hx-post href
-        :hx-target "#messages"
-        :hx-swap "beforeend"
-        :_ (str "on htmx:afterRequest"
-                " set <textarea/>'s value to ''"
-                " then send newMessage to #messages")
-        :class "flex"}
-       [:textarea.w-full#text {:name "text"}]
-       [:.w-2]
-       [:button.btn {:type "submit"} "Send"]))))
+     [:.border.border-neutral-600.p-3.bg-white.grow.flex-1.overflow-y-auto#messages
+      {:hx-ext "ws"
+       :ws-connect (str href "/connect")
+       :_ "on load or newMessage set my scrollTop to my scrollHeight"}
+      (map message-view (sort-by :msg/created-at msgs))]
+     [:.h-3]
+     (biff/form
+      {:hx-post href
+       :hx-target "#messages"
+       :hx-swap "beforeend"
+       :_ (str "on htmx:afterRequest"
+               " set <textarea/>'s value to ''"
+               " then send newMessage to #messages")
+       :class "flex"}
+      [:textarea.w-full#text {:name "text"}]
+      [:.w-2]
+      [:button.btn {:type "submit"} "Send"]))))
 
 (defn connect [{:keys [com.eelchat/chat-clients]
                 {chan-id :xt/id} :channel
@@ -184,8 +190,30 @@
         {:status 303
          :headers {"Location" (str "/community/" (:xt/id community))}}))))
 
+
+
+
+(defn a [text] (str "<a>" text "</a>"))
+
+(defn svgUpload1 []
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body "sdf"})
+
+(defn svgUpload2 [[{:keys [session] :as req}]]
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body (div (str (a "konaworld.com") (a "sdf")))})
+
+(defn svgUpload [{:keys [community roles] :as req}]
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body (div (str (a "konaworld.com") (a "sdf")))})
+
+
 (def features
   {:routes ["" {:middleware [mid/wrap-signed-in]}
+            ["/svgUpload" {:post svgUpload}]
             ["/app"           {:get app}]
             ["/community"     {:post new-community}]
             ["/community/:id" {:middleware [wrap-community]}
@@ -198,3 +226,12 @@
                    :delete delete-channel}]
               ["/connect" {:get connect}]]]]
    :on-tx on-new-message})
+
+
+
+
+
+(defn p [text] (str "<p>" text "</p>"))
+
+(div
+ (div "sda"))

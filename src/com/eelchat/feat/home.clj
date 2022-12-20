@@ -71,8 +71,16 @@
     [:.h-12 {:class "grow-[2]"}]
     [:.text-sm recaptcha-disclosure]
     [:.h-6]
-    ]))
+    ]
+   
+   [:nav
+    [:h2 "sdfsdf"]]))
 
 (def features
   {:routes ["" {:middleware [mid/wrap-redirect-signed-in]}
             ["/" {:get home}]]})
+
+
+(if false
+  "TRUEEE"
+  "FALSE")
