@@ -197,20 +197,18 @@
 
 (defn a [text] (str "<a>" text "</a>"))
 
-(defn svgUpload1 []
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body "sdf"})
-
-(defn svgUpload2 [[{:keys [session] :as req}]]
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (div (str (a "konaworld.com") (a "sdf")))})
-
-(defn svgUpload [{:keys [community roles] :as req}]
+(defn svgUpload [{:keys [community roles] :as req :result result}]
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body (div (a "konaworld.com"))})
+
+(defn svgUpload2 [{:keys [community roles] :as req :result result}]
+  (let [svg-file (request/params request :file)]
+    (with-open [reader (io/reader svg-file)]
+      (let [svg-contents (read-string reader)]
+        {:status 200
+         :headers {"Content-Type" "text/html"}
+         :body (str "SVG file uploaded: ")}))))
 
 
 (def features
