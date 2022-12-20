@@ -1,8 +1,9 @@
 (ns com.eelchat.feat.app
   (:require [com.biffweb :as biff :refer [q]]
-            [com.eelchat.middleware :as mid]
             [com.eelchat.ui :as ui]
             [ring.adapter.jetty9 :as jetty]
+            [ring.util.request :as request]
+            [ring.util.response :as response]
             [rum.core :as rum]
             [xtdb.api :as xt]))
 
@@ -211,8 +212,17 @@
          :body (str "SVG file uploaded: ")}))))
 
 
+(defn handle-post-svg [request]
+  (let [svg-file (:params request "svg-file")
+        svg-content (slurp svg-file)])
+    (response/response 
+              {:status 200
+               :headers {"Content-Type" "image/svg+xml"}
+               :body svg-content}))
+
+
 (def features
-  {:routes ["" {:middleware [mid/wrap-signed-in]}
+  {:routes [
             ["/svgUpload" {:post svgUpload}]
             ["/app"           {:get app}]
             ["/community"     {:post new-community}]
