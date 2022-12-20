@@ -14,8 +14,10 @@
   (ui/app-page
    req
    [:p "Select a community, or create a new one."]
-   [:sl-button
-    {:hx-post "/svgUpload"} "Upload SVG"]))
+   [:form {:hx-post "svgUpload"
+           :hx-encoding "multipart/form-data"}
+    [:input {:type "file", :name "file", :accept ".svg"}]
+    [:button {:type "submit"} "Upload SVG"]]))
 
 (defn new-community [{:keys [session] :as req}]
   (let [comm-id (random-uuid)]
@@ -208,7 +210,7 @@
 (defn svgUpload [{:keys [community roles] :as req}]
   {:status 200
    :headers {"Content-Type" "text/html"}
-   :body (div (str (a "konaworld.com") (a "sdf")))})
+   :body (div (a "konaworld.com"))})
 
 
 (def features
