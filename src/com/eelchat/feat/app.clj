@@ -1,8 +1,10 @@
 (ns com.eelchat.feat.app
-  (:require [com.biffweb :as biff :refer [q]]
+  (:require [clojure.java.io :as io]
+            [com.biffweb :as biff :refer [q]]
             [com.eelchat.middleware :as mid]
             [com.eelchat.ui :as ui]
             [ring.adapter.jetty9 :as jetty]
+            [ring.util.response :as response]
             [rum.core :as rum]
             [xtdb.api :as xt]))
 
@@ -14,7 +16,7 @@
   (ui/app-page
    req
    [:p "Select a community, or create a new one."]
-   [:form {:hx-post "svgUpload"
+   [:form {:hx-post "/svgUpload"
            :hx-encoding "multipart/form-data"}
     [:input {:type "file", :name "file", :accept ".svg"}]
     [:button {:type "submit"} "Upload SVG"]]))
@@ -212,10 +214,36 @@
    :headers {"Content-Type" "text/html"}
    :body (div (a "konaworld.com"))})
 
+(defn svgUpload3 [request]
+  (let [svg-file (:params request "svg-file")        
+        svg-content (slurp svg-file)]
+    (response/response 
+              {:status 200
+               :headers {"Content-Type" "image/svg+xml"}
+               :body svg-content})))
+
+(defn svgUpload4 [request]
+  (let [file-info (:file (:params request "file"))
+        tempfile (:tempfile file-info)
+        input-stream (io/input-stream tempfile)
+        svg-content (slurp input-stream)]
+    {:status 200
+     :headers {"Content-Type" "image/svg+xml"}
+     :body svg-content}))
+
+    
+    
+    ;; (let [svg-content (slurp input-stream)]
+    ;;   (response/response
+    ;;    {:status 200
+    ;;     :headers {"Content-Type" "image/svg+xml"}
+    ;;     :body svg-content}))))
+
 
 (def features
-  {:routes ["" {:middleware [mid/wrap-signed-in]}
-            ["/svgUpload" {:post svgUpload}]
+  {:routes [
+            ["/svgUpload" {:post svgUpload4}]
+            "" {:middleware [mid/wrap-signed-in]} 
             ["/app"           {:get app}]
             ["/community"     {:post new-community}]
             ["/community/:id" {:middleware [wrap-community]}
@@ -228,6 +256,23 @@
                    :delete delete-channel}]
               ["/connect" {:get connect}]]]]
    :on-tx on-new-message})
+
+
+;; (def features
+;;   {:routes ["" {:middleware [mid/wrap-signed-in]}
+;;             ["/svgUpload" {:post svgUpload}]
+;;             ["/app"           {:get app}]
+;;             ["/community"     {:post new-community}]
+;;             ["/community/:id" {:middleware [wrap-community]}
+;;              [""      {:get community}]
+;;              ["/join" {:post join-community}]
+;;              ["/channel" {:post new-channel}]
+;;              ["/channel/:chan-id" {:middleware [wrap-channel]}
+;;               ["" {:get channel-page
+;;                    :post new-message
+;;                    :delete delete-channel}]
+;;               ["/connect" {:get connect}]]]]
+;;    :on-tx on-new-message})
 
 
 
