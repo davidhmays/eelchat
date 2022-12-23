@@ -16,8 +16,9 @@
   (ui/app-page
    req
    [:p "Select a community, or create a new one."]
-   [:form {:hx-post "/svgUpload"
+   [:form {:hx-post "/svg-upload"
            :hx-encoding "multipart/form-data"}
+    [:input {:type "text" :name "this-thing"}]
     [:input {:type "file", :name "file", :accept ".svg"}]
     [:button {:type "submit"} "Upload SVG"]]))
 
@@ -199,37 +200,16 @@
 
 (defn a [text] (str "<a>" text "</a>"))
 
-(defn svgUpload1 []
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body "sdf"})
-
-(defn svgUpload2 [[{:keys [session] :as req}]]
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (div (str (a "konaworld.com") (a "sdf")))})
-
-(defn svgUpload [{:keys [community roles] :as req}]
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (div (a "konaworld.com"))})
-
-(defn svgUpload3 [request]
-  (let [svg-file (:params request "svg-file")        
-        svg-content (slurp svg-file)]
-    (response/response 
-              {:status 200
-               :headers {"Content-Type" "image/svg+xml"}
-               :body svg-content})))
-
-(defn svgUpload4 [request]
-  (let [file-info (:file (:params request "file"))
+(defn svg-upload [request]
+  (let [file-info (:file (:params request))
         tempfile (:tempfile file-info)
         input-stream (io/input-stream tempfile)
-        svg-content (slurp input-stream)]
+        svg-content (slurp input-stream)
+        received-form-input (:this-thing (:params request))]
     {:status 200
-     :headers {"Content-Type" "image/svg+xml"}
-     :body svg-content}))
+    ;;  :headers {"Content-Type" "image/svg+xml"}
+     :headers {"Content-Type" "text/html"}
+     :body (str received-form-input svg-content)}))
 
     
     
@@ -242,7 +222,7 @@
 ;;
 (def features
   {:routes [
-            ["/svgUpload" {:post svgUpload4}]
+            ["/svg-upload" {:post svg-upload}]
             "" {:middleware [mid/wrap-signed-in]} 
             ["/app"           {:get app}]
             ["/community"     {:post new-community}]
@@ -273,12 +253,3 @@
 ;;                    :delete delete-channel}]
 ;;               ["/connect" {:get connect}]]]]
 ;;    :on-tx on-new-message})
-
-
-
-
-
-(defn p [text] (str "<p>" text "</p>"))
-
-(div
- (div "sda"))
